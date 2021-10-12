@@ -120,6 +120,8 @@ def run_training(args: TrainArgs,
         features_scaler = None
 
     if args.atom_descriptor_scaling and args.atom_descriptors is not None:
+        # remove existing scaler from features
+        train_data._scaler = None
         atom_descriptor_scaler = train_data.normalize_features(replace_nan_token=0, scale_atom_descriptors=True)
         val_data.normalize_features(atom_descriptor_scaler, scale_atom_descriptors=True)
         test_data.normalize_features(atom_descriptor_scaler, scale_atom_descriptors=True)
@@ -127,6 +129,8 @@ def run_training(args: TrainArgs,
         atom_descriptor_scaler = None
 
     if args.bond_feature_scaling and args.bond_features_size > 0:
+        # remove existing scaler from features or atom_descriptors
+        train_data._scaler = None
         bond_feature_scaler = train_data.normalize_features(replace_nan_token=0, scale_bond_features=True)
         val_data.normalize_features(bond_feature_scaler, scale_bond_features=True)
         test_data.normalize_features(bond_feature_scaler, scale_bond_features=True)
