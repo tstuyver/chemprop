@@ -389,6 +389,8 @@ def split_data(data: MoleculeDataset,
                seed: int = 0,
                num_folds: int = 1,
                args: TrainArgs = None,
+               cv_train_size: int = -1,
+               cv_valid_size: int = -1,
                logger: Logger = None) -> Tuple[MoleculeDataset,
                                                MoleculeDataset,
                                                MoleculeDataset]:
@@ -401,6 +403,8 @@ def split_data(data: MoleculeDataset,
     :param seed: The random seed to use before shuffling data.
     :param num_folds: Number of folds to create (only needed for "cv" split type).
     :param args: A :class:`~chemprop.args.TrainArgs` object.
+    :param cv_train_size: Number of training points to sample.
+    :param cv_valid_size: Number of validation points to sample.
     :param logger: A logger for recording output.
     :return: A tuple of :class:`~chemprop.data.MoleculeDataset`\ s containing the train,
              validation, and test splits of the data.
@@ -447,6 +451,12 @@ def split_data(data: MoleculeDataset,
                 val.append(d)
             else:
                 train.append(d)
+
+        if cv_train_size > 0:
+            train = random.sample(train, cv_train_size)
+
+        if cv_valid_size > 0:
+            val = random.sample(val, cv_valid_size)
 
         return MoleculeDataset(train), MoleculeDataset(val), MoleculeDataset(test)
 

@@ -236,7 +236,6 @@ class MoleculeDataset(Dataset):
         :param data: A list of :class:`MoleculeDatapoint`\ s.
         """
         self._data = data
-        self._scaler = None
         self._batch_graph = None
         self._random = Random()
 
@@ -428,7 +427,7 @@ class MoleculeDataset(Dataset):
             if len(self._data) > 0 and self._data[0].bond_features is not None else None
 
     def normalize_features(self, scaler: StandardScaler = None, replace_nan_token: int = 0,
-                           scale_atom_descriptors: bool = False, scale_bond_features: bool = False) -> StandardScaler:
+                           scale_atom_descriptors: bool = False, scale_bond_features: bool = False, rbf_expansion: bool = False) -> StandardScaler:
         """
         Normalizes the features of the dataset using a :class:`~chemprop.data.StandardScaler`.
 
@@ -453,10 +452,7 @@ class MoleculeDataset(Dataset):
                 (self._data[0].features is None and not scale_bond_features and not scale_atom_descriptors):
             return None
 
-        if scaler is not None:
-            self._scaler = scaler
-
-        elif self._scaler is None:
+        if scaler is None:
             if scale_atom_descriptors and not self._data[0].atom_descriptors is None:
                 features = np.vstack([d.raw_atom_descriptors for d in self._data])
             elif scale_atom_descriptors and not self._data[0].atom_features is None:
@@ -465,23 +461,49 @@ class MoleculeDataset(Dataset):
                 features = np.vstack([d.raw_bond_features for d in self._data])
             else:
                 features = np.vstack([d.raw_features for d in self._data])
-            self._scaler = StandardScaler(replace_nan_token=replace_nan_token)
-            self._scaler.fit(features)
+            scaler = StandardScaler(replace_nan_token=replace_nan_token)
+            scaler.fit(features)
 
         if scale_atom_descriptors and not self._data[0].atom_descriptors is None:
             for d in self._data:
-                d.set_atom_descriptors(self._scaler.transform(d.raw_atom_descriptors))
+                d.set_atom_descriptors(scaler.transform(d.raw_atom_descriptors))
         elif scale_atom_descriptors and not self._data[0].atom_features is None:
             for d in self._data:
-                d.set_atom_features(self._scaler.transform(d.raw_atom_features))
+                d.set_atom_features(scaler.transform(d.raw_atom_features))
         elif scale_bond_features:
             for d in self._data:
-                d.set_bond_features(self._scaler.transform(d.raw_bond_features))
+                d.set_bond_features(scaler.transform(d.raw_bond_features))
         else:
             for d in self._data:
-                d.set_features(self._scaler.transform(d.raw_features.reshape(1, -1))[0])
+                d.set_features(scaler.transform(d.raw_features.reshape(1, -1))[0])
 
-        return self._scaler
+        for d in self._data:
+            d.set_atom_descriptors(self.expand_descriptors(d.atom_descriptors))
+
+        return scaler
+
+
+    def rbf_expansion(self, expanded, mu=0, delta=0.02, kmax=50):
+        """This has to be added!"""
+        expanded = expanded.reshape(-1,1)
+        k = np.arange(0, kmax)
+        
+        return np.exp(-(expanded - (mu + delta * k))**2 / delta)
+
+
+    def expand_descriptors(self, X):
+        """This has to be added!"""
+        X = np.array(X).astype(float)
+        tmp_1 = np.transpose(X)
+        tmp_1 = tmp_1.reshape(len(tmp_1),-1,1)
+        tmp_2 = []
+        for i in range(len(tmp_1)):
+            tmp_2.append(np.apply_along_axis(self.rbf_expansion, -1, tmp_1[i], -3.0, 0.12, 50))
+        X = np.concatenate([tmp_2[i] for i in range(len(tmp_2))], axis=-1)
+        X = X.reshape(len(X),-1)
+
+        return X
+
 
     def normalize_targets(self) -> StandardScaler:
         """

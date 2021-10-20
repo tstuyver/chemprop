@@ -60,8 +60,12 @@ class MPNEncoder(nn.Module):
         # layer after concatenating the descriptors if args.atom_descriptors == descriptors
         if args.atom_descriptors == 'descriptor':
             self.atom_descriptors_size = args.atom_descriptors_size
-            self.atom_descriptors_layer = nn.Linear(self.hidden_size + self.atom_descriptors_size,
-                                                    self.hidden_size + self.atom_descriptors_size,)
+            self.atom_descriptors_layer1 = nn.Linear(self.hidden_size + self.atom_descriptors_size * 50,
+                                                    self.hidden_size + self.atom_descriptors_size * 50,)
+            self.atom_descriptors_layer2 = nn.Linear(self.hidden_size + self.atom_descriptors_size * 50,
+                                                    self.hidden_size + self.atom_descriptors_size * 50,)
+            self.atom_descriptors_layer3 = nn.Linear(self.hidden_size + self.atom_descriptors_size * 50,
+                                                    self.hidden_size + self.atom_descriptors_size * 50,)
 
     def forward(self,
                 mol_graph: BatchMolGraph,
@@ -126,7 +130,9 @@ class MPNEncoder(nn.Module):
                 raise ValueError(f'The number of atoms is different from the length of the extra atom features')
 
             atom_hiddens = torch.cat([atom_hiddens, atom_descriptors_batch], dim=1)     # num_atoms x (hidden + descriptor size)
-            atom_hiddens = self.atom_descriptors_layer(atom_hiddens)                    # num_atoms x (hidden + descriptor size)
+            atom_hiddens = self.act_func(self.atom_descriptors_layer1(atom_hiddens))                    # num_atoms x (hidden + descriptor size)
+            atom_hiddens = self.act_func(self.atom_descriptors_layer2(atom_hiddens))
+            atom_hiddens = self.act_func(self.atom_descriptors_layer3(atom_hiddens))
             atom_hiddens = self.dropout_layer(atom_hiddens)                             # num_atoms x (hidden + descriptor size)
 
         # Readout

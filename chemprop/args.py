@@ -243,6 +243,10 @@ class TrainArgs(CommonArgs):
     """Weights associated with each target, affecting the relative weight of targets in the loss function. Must match the number of target columns."""
     split_type: Literal['random', 'scaffold_balanced', 'predetermined', 'crossval', 'cv', 'cv-no-test', 'index_predetermined', 'random_with_repeated_smiles'] = 'random'
     """Method of splitting the data into train/val/test."""
+    cv_train_size: int = -1
+    """Number of data points in the train set during cross-validation"""
+    cv_valid_size: int = -1
+    """Number of data points in the validation set during cross-validation"""
     split_sizes: Tuple[float, float, float] = (0.8, 0.1, 0.1)
     """Split proportions for train/validation/test sets."""
     num_folds: int = 1

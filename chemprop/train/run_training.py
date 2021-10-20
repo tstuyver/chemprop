@@ -90,7 +90,9 @@ def run_training(args: TrainArgs,
                                                      seed=args.seed,
                                                      num_folds=args.num_folds,
                                                      args=args,
-                                                     logger=logger)
+                                                     logger=logger,
+                                                     cv_train_size=args.cv_train_size,
+                                                     cv_valid_size=args.cv_valid_size)
 
     if args.dataset_type == 'classification':
         class_sizes = get_class_sizes(data)
@@ -120,9 +122,9 @@ def run_training(args: TrainArgs,
         features_scaler = None
 
     if args.atom_descriptor_scaling and args.atom_descriptors is not None:
-        atom_descriptor_scaler = train_data.normalize_features(replace_nan_token=0, scale_atom_descriptors=True)
-        val_data.normalize_features(atom_descriptor_scaler, scale_atom_descriptors=True)
-        test_data.normalize_features(atom_descriptor_scaler, scale_atom_descriptors=True)
+        atom_descriptor_scaler = train_data.normalize_features(replace_nan_token=0, scale_atom_descriptors=True, rbf_expansion=True)
+        val_data.normalize_features(atom_descriptor_scaler, scale_atom_descriptors=True, rbf_expansion=True)
+        test_data.normalize_features(atom_descriptor_scaler, scale_atom_descriptors=True, rbf_expansion=True)
     else:
         atom_descriptor_scaler = None
 

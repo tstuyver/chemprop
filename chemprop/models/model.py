@@ -71,7 +71,7 @@ class MoleculeModel(nn.Module):
                 first_linear_dim += args.features_size
 
         if args.atom_descriptors == 'descriptor':
-            first_linear_dim += args.atom_descriptors_size
+            first_linear_dim += args.atom_descriptors_size * 50
 
         dropout = nn.Dropout(args.dropout)
         activation = get_activation_function(args.activation)
